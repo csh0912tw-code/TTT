@@ -1,0 +1,9 @@
+services:
+  - type: web
+    name: tt-ai-cloud
+    runtime: node
+    buildCommand: npm install
+    startCommand: node server.js
+    envVars:
+      - key: YOUTUBE_API_KEY
+        sync: false
