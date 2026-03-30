@@ -53,4 +53,93 @@ app.get("/api/search-videos", async (req, res) => {
     });
 
     const searchResp = await fetch(
-      `https
+      `https://www.googleapis.com/youtube/v3/search?${searchParams.toString()}`
+    );
+
+    if (!searchResp.ok) {
+      const details = await searchResp.text();
+      return res.status(searchResp.status).json({
+        error: "YouTube search request failed.",
+        details
+      });
+    }
+
+    const searchData = await searchResp.json();
+    const videoIds = (searchData.items || [])
+      .map((item) => item?.id?.videoId)
+      .filter(Boolean);
+
+    if (!videoIds.length) {
+      return res.json({
+        query: q,
+        items: []
+      });
+    }
+
+    const detailsParams = new URLSearchParams({
+      part: "contentDetails,statistics,snippet",
+      id: videoIds.join(","),
+      key: YOUTUBE_API_KEY
+    });
+
+    const detailsResp = await fetch(
+      `https://www.googleapis.com/youtube/v3/videos?${detailsParams.toString()}`
+    );
+
+    if (!detailsResp.ok) {
+      const details = await detailsResp.text();
+      return res.status(detailsResp.status).json({
+        error: "YouTube details request failed.",
+        details
+      });
+    }
+
+    const detailsData = await detailsResp.json();
+    const detailsMap = new Map(
+      (detailsData.items || []).map((item) => [item.id, item])
+    );
+
+    const items = (searchData.items || []).map((item) => {
+      const videoId = item.id.videoId;
+      const detail = detailsMap.get(videoId) || {};
+      const snippet = item.snippet || {};
+      const thumbnails = snippet.thumbnails || {};
+
+      return {
+        id: videoId,
+        title: snippet.title || "",
+        channelTitle: snippet.channelTitle || "",
+        description: snippet.description || "",
+        publishedAt: snippet.publishedAt || "",
+        thumbnail:
+          thumbnails.medium?.url ||
+          thumbnails.high?.url ||
+          thumbnails.default?.url ||
+          "",
+        duration: detail.contentDetails?.duration || "",
+        viewCount: detail.statistics?.viewCount || "0",
+        embedUrl: `https://www.youtube.com/embed/${videoId}`
+      };
+    });
+
+    return res.json({
+      query: q,
+      items
+    });
+  } catch (error) {
+    return res.status(500).json({
+      error: "Unexpected server error.",
+      details: String(error)
+    });
+  }
+});
+
+app.use(express.static(path.join(__dirname, "public")));
+
+app.use((_req, res) => {
+  res.sendFile(path.join(__dirname, "public", "index.html"));
+});
+
+app.listen(PORT, () => {
+  console.log(`Server listening on port ${PORT}`);
+});
