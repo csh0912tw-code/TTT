@@ -1,501 +1,216 @@
-<!DOCTYPE html>
-<html lang="zh-TW">
+<!doctype html>
+<html lang="zh-Hant">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>桌球 AI 雲端版</title>
+  <title>桌球影片搜尋</title>
   <style>
-    body{margin:0;padding:14px;background:#111;color:#fff;font-family:Arial,sans-serif}
-    .title{font-size:22px;font-weight:700;margin-bottom:12px}
-    .panel{background:#1c1c1c;border-radius:14px;padding:14px;margin-top:12px}
-    .muted{color:#bbb;font-size:13px;line-height:1.6}
-    .compare-zone{height:46vh;max-height:46vh;min-height:408px;display:grid;grid-template-rows:1fr 1fr;gap:8px;overflow:hidden;margin-top:10px}
-    .video-card{position:relative;min-height:200px;background:#000;border-radius:12px;overflow:hidden}
-    .video-label{position:absolute;left:8px;top:8px;z-index:4;background:rgba(0,0,0,.6);padding:6px 10px;border-radius:999px;font-size:12px}
-    .video-card video,.video-card iframe,.video-card canvas{width:100%;height:100%;object-fit:cover;display:block;background:#000}
-    .overlay{position:absolute;inset:0;z-index:3;background:transparent}
-    input,button,select{width:100%;border:0;border-radius:12px;padding:12px;font-size:15px;box-sizing:border-box;margin-top:10px}
-    input,select{background:#fff;color:#111}
-    button{background:#00c853;color:#fff;font-weight:700}
-    button.secondary{background:#333}
-    button:disabled{opacity:.55}
-    .grid-2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-    .status{font-size:14px;color:#9be7ff;margin-top:8px;line-height:1.6}
-    .report{font-size:15px;line-height:1.8}
-    .candidate{border:1px solid #2d2d2d;border-radius:12px;padding:10px;display:grid;grid-template-columns:110px 1fr;gap:10px;align-items:start;margin-top:10px}
-    .candidate img{width:110px;height:70px;object-fit:cover;border-radius:8px;background:#000}
-    .candidate-title{font-size:14px;font-weight:700;line-height:1.5}
-    .candidate-meta{font-size:12px;color:#bbb;margin-top:4px;line-height:1.5}
-    .candidate-actions{margin-top:8px;display:flex;gap:8px;flex-wrap:wrap}
-    .candidate-actions button{margin-top:0;padding:10px;font-size:13px;width:auto}
-    .metric{margin-top:12px}
-    .metric-head{display:flex;justify-content:space-between;margin-bottom:6px;font-size:14px}
-    .bar{height:12px;background:#333;border-radius:999px;overflow:hidden}
-    .fill{height:100%;width:0%;background:linear-gradient(90deg,#ff5252,#ffeb3b,#00e676)}
+    * {
+      box-sizing: border-box;
+    }
+
+    :root {
+      --bg: #f4f6f8;
+      --card: #ffffff;
+      --text: #1f2937;
+      --muted: #6b7280;
+      --primary: #2563eb;
+      --primary-hover: #1d4ed8;
+      --border: #e5e7eb;
+      --shadow: 0 6px 18px rgba(0, 0, 0, 0.08);
+      --radius: 16px;
+    }
+
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+    }
+
+    .page {
+      width: 100%;
+      max-width: 960px;
+      margin: 0 auto;
+      padding: 16px;
+    }
+
+    h1 {
+      font-size: clamp(22px, 4vw, 32px);
+      line-height: 1.25;
+      margin: 0 0 16px;
+    }
+
+    .controls {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 12px;
+      margin-bottom: 20px;
+      background: var(--card);
+      border-radius: var(--radius);
+      padding: 16px;
+      box-shadow: var(--shadow);
+    }
+
+    input,
+    select,
+    button {
+      width: 100%;
+      min-height: 48px;
+      padding: 12px 14px;
+      font-size: 16px;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      outline: none;
+    }
+
+    input:focus,
+    select:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
+    }
+
+    button {
+      border: none;
+      background: var(--primary);
+      color: #fff;
+      font-weight: bold;
+      cursor: pointer;
+      transition: background 0.2s ease;
+    }
+
+    button:hover {
+      background: var(--primary-hover);
+    }
+
+    #resultInfo {
+      margin: 8px 0 16px;
+      color: var(--muted);
+      font-size: 14px;
+      word-break: break-word;
+    }
+
+    .list {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 16px;
+    }
+
+    .card {
+      background: var(--card);
+      border-radius: var(--radius);
+      padding: 14px;
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+
+    .thumb-wrap {
+      width: 100%;
+      aspect-ratio: 16 / 9;
+      background: #e5e7eb;
+      border-radius: 12px;
+      overflow: hidden;
+      margin-bottom: 12px;
+    }
+
+    .card img,
+    .card video,
+    .card iframe {
+      width: 100%;
+      height: 100%;
+      display: block;
+      object-fit: cover;
+      border: 0;
+    }
+
+    .title {
+      font-size: 18px;
+      font-weight: bold;
+      line-height: 1.5;
+      margin: 0 0 8px;
+      word-break: break-word;
+    }
+
+    .meta {
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.6;
+      margin-bottom: 10px;
+      word-break: break-word;
+    }
+
+    a {
+      color: var(--primary);
+      text-decoration: none;
+      font-weight: 600;
+      word-break: break-word;
+    }
+
+    a:hover {
+      text-decoration: underline;
+    }
+
+    @media (min-width: 640px) {
+      .page {
+        padding: 24px;
+      }
+
+      .controls {
+        grid-template-columns: 1fr 1fr;
+      }
+
+      .controls button {
+        grid-column: 1 / -1;
+      }
+    }
+
+    @media (min-width: 900px) {
+      .list {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+    }
   </style>
 </head>
 <body>
-  <div class="title">🏓 桌球 AI 雲端版</div>
+  <div class="page">
+    <h1>桌球技術影片搜尋</h1>
 
-  <div class="panel">
-    <div><b>核心流程：</b>上傳影片 → 框選人物 → 骨架分析 → 真實影片搜尋 → 選影片比較</div>
-    <div class="compare-zone">
-      <div class="video-card">
-        <div class="video-label">受評者影片</div>
-        <video id="userVideo" controls playsinline></video>
-        <canvas id="roiCanvas" class="overlay"></canvas>
-        <canvas id="userOverlayCanvas" class="overlay"></canvas>
-      </div>
-      <div class="video-card">
-        <div class="video-label">參考影片</div>
-        <iframe id="refPlayer" src="" title="參考影片" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
-      </div>
+    <div class="controls">
+      <select id="strokeType">
+        <option value="forehand">正手</option>
+        <option value="backhand">反手</option>
+        <option value="serve">發球</option>
+      </select>
+
+      <input id="playerName" placeholder="可輸入選手名稱，例如 Fan Zhendong" />
+      <input id="extraKeywords" placeholder="補充關鍵字，例如 slow motion" />
+
+      <button onclick="searchVideos()">搜尋影片</button>
     </div>
+
+    <div id="resultInfo"></div>
+    <div id="list" class="list"></div>
   </div>
 
-  <div class="panel">
-    <input type="file" id="upload" accept="video/*" />
-    <select id="strokeSelect">
-      <option value="forehand">正手</option>
-      <option value="backhand">反手</option>
-      <option value="serve">發球</option>
-    </select>
-    <input id="playerNameInput" placeholder="可選：指定選手名稱，例如 Ma Long" />
-    <div class="grid-2">
-      <button class="secondary" id="resetRoiBtn">重設框選</button>
-      <button id="initModelBtn">載入模型</button>
-    </div>
-    <button id="analyzeBtn">分析受評者</button>
-    <button id="searchRefBtn">搜尋真實參考影片</button>
-    <div id="status" class="status">模型尚未載入</div>
-    <div class="muted">這版前後端已合併成同一個雲端服務，上線後手機可直接開網址使用。</div>
-  </div>
+  <script>
+    async function searchVideos() {
+      const strokeType = document.getElementById("strokeType").value;
+      const playerName = document.getElementById("playerName").value.trim();
+      const extraKeywords = document.getElementById("extraKeywords").value.trim();
+      const list = document.getElementById("list");
+      const resultInfo = document.getElementById("resultInfo");
 
-  <div class="panel">
-    <div id="candidateList"></div>
-  </div>
+      resultInfo.textContent = "搜尋中...";
+      list.innerHTML = "";
 
-  <div class="panel">
-    <div id="userSummary" class="report">等待分析。</div>
-  </div>
+      const keyword = [playerName, strokeType, extraKeywords]
+        .filter(Boolean)
+        .join(" ");
 
-  <div class="panel">
-    <div id="diffReport" class="report">等待比較。</div>
-    <div class="metric">
-      <div class="metric-head"><span>相似度</span><span id="simTotalLabel">0</span></div>
-      <div class="bar"><div class="fill" id="simTotalBar"></div></div>
-    </div>
-  </div>
+      resultInfo.textContent = `目前搜尋關鍵字：${keyword}`;
 
-  <script type="module">
-    import { FilesetResolver, PoseLandmarker } from "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision/vision_bundle.mjs";
-
-    const API_BASE = "";
-
-    const upload = document.getElementById("upload");
-    const userVideo = document.getElementById("userVideo");
-    const refPlayer = document.getElementById("refPlayer");
-    const roiCanvas = document.getElementById("roiCanvas");
-    const roiCtx = roiCanvas.getContext("2d");
-    const userOverlayCanvas = document.getElementById("userOverlayCanvas");
-    const overlayCtx = userOverlayCanvas.getContext("2d");
-    const strokeSelect = document.getElementById("strokeSelect");
-    const playerNameInput = document.getElementById("playerNameInput");
-    const statusEl = document.getElementById("status");
-    const candidateList = document.getElementById("candidateList");
-    const userSummary = document.getElementById("userSummary");
-    const diffReport = document.getElementById("diffReport");
-
-    let poseLandmarker = null;
-    let previewFrame = null;
-    let roiRect = null;
-    let isDrawing = false;
-    let startX = 0;
-    let startY = 0;
-    let userMetrics = null;
-    let selectedReference = null;
-
-    const LANDMARK = {
-      LEFT_SHOULDER: 11,
-      RIGHT_SHOULDER: 12,
-      LEFT_ELBOW: 13,
-      RIGHT_ELBOW: 14,
-      LEFT_WRIST: 15,
-      RIGHT_WRIST: 16,
-      LEFT_HIP: 23,
-      RIGHT_HIP: 24
-    };
-
-    const POSE_CONNECTIONS = [
-      [11, 12], [11, 13], [13, 15], [12, 14], [14, 16], [11, 23], [12, 24], [23, 24]
-    ];
-
-    function setStatus(text) { statusEl.textContent = text; }
-    function avg(arr) { return arr.length ? arr.reduce((a,b)=>a+b,0)/arr.length : 0; }
-    function std(arr) {
-      if (!arr.length) return 0;
-      const m = avg(arr);
-      return Math.sqrt(avg(arr.map(v => (v - m) ** 2)));
+      /* 你原本真正的 API 呼叫與 render 邏輯，貼上來後我再幫你接 */
     }
-    function percentile(arr, p) {
-      if (!arr.length) return 0;
-      const sorted = [...arr].sort((a,b)=>a-b);
-      const idx = Math.floor((sorted.length - 1) * p);
-      return sorted[idx];
-    }
-    function midpoint(a,b){ return {x:(a.x+b.x)/2, y:(a.y+b.y)/2}; }
-    function pointSpeed(p1,p2,dt){
-      if(!p1 || !p2 || dt<=0) return 0;
-      return Math.hypot(p2.x-p1.x, p2.y-p1.y)/dt;
-    }
-    function angleABC(a,b,c){
-      const abx=a.x-b.x, aby=a.y-b.y, cbx=c.x-b.x, cby=c.y-b.y;
-      const dot=abx*cbx + aby*cby;
-      const mag1=Math.hypot(abx,aby), mag2=Math.hypot(cbx,cby);
-      if(mag1===0 || mag2===0) return 0;
-      const cos=Math.max(-1,Math.min(1,dot/(mag1*mag2)));
-      return Math.acos(cos)*180/Math.PI;
-    }
-    function movingAverage(arr, windowSize=5){
-      const out=[], half=Math.floor(windowSize/2);
-      for(let i=0;i<arr.length;i++){
-        let sum=0,count=0;
-        for(let j=-half;j<=half;j++){
-          const idx=i+j;
-          if(idx>=0 && idx<arr.length){ sum+=arr[idx]; count++; }
-        }
-        out.push(sum/count);
-      }
-      return out;
-    }
-    function waitForLoadedMetadata(videoEl){
-      return new Promise((resolve)=>{
-        if(videoEl.readyState >= 1) resolve();
-        else videoEl.onloadedmetadata = () => resolve();
-      });
-    }
-    function seekTo(videoEl, time){
-      return new Promise((resolve)=>{
-        const handler=()=>{ videoEl.removeEventListener("seeked", handler); resolve(); };
-        videoEl.addEventListener("seeked", handler);
-        videoEl.currentTime=Math.min(Math.max(time,0), videoEl.duration || 0);
-      });
-    }
-    function clampRect(rect,width,height){
-      const x=Math.max(0,Math.min(rect.x,width-1));
-      const y=Math.max(0,Math.min(rect.y,height-1));
-      const w=Math.max(1,Math.min(rect.w,width-x));
-      const h=Math.max(1,Math.min(rect.h,height-y));
-      return {x,y,w,h};
-    }
-    function setupCanvases(){
-      const width=userVideo.clientWidth || 320;
-      const vw=previewFrame ? previewFrame.width : (userVideo.videoWidth || 640);
-      const vh=previewFrame ? previewFrame.height : (userVideo.videoHeight || 360);
-      const ratio=vh/vw;
-      const height=width*ratio;
-      for(const c of [roiCanvas,userOverlayCanvas]){
-        c.width=Math.floor(width*devicePixelRatio);
-        c.height=Math.floor(height*devicePixelRatio);
-        c.style.width=`${width}px`;
-        c.style.height=`${height}px`;
-      }
-      roiCtx.setTransform(devicePixelRatio,0,0,devicePixelRatio,0,0);
-      overlayCtx.setTransform(devicePixelRatio,0,0,devicePixelRatio,0,0);
-      redrawPreview();
-    }
-    function redrawPreview(){
-      const w=roiCanvas.clientWidth, h=roiCanvas.clientHeight;
-      roiCtx.clearRect(0,0,w,h);
-      overlayCtx.clearRect(0,0,w,h);
-      if(previewFrame) roiCtx.drawImage(previewFrame,0,0,w,h);
-      else { roiCtx.fillStyle="#000"; roiCtx.fillRect(0,0,w,h); }
-      if(roiRect){
-        roiCtx.strokeStyle="#00e676";
-        roiCtx.lineWidth=3;
-        roiCtx.strokeRect(roiRect.x, roiRect.y, roiRect.w, roiRect.h);
-        roiCtx.fillStyle="rgba(0,230,118,0.12)";
-        roiCtx.fillRect(roiRect.x, roiRect.y, roiRect.w, roiRect.h);
-      }
-    }
-    async function captureCurrentFrame(){
-      if(!userVideo.src) return;
-      await waitForLoadedMetadata(userVideo);
-      const temp=document.createElement("canvas");
-      temp.width=userVideo.videoWidth || 640;
-      temp.height=userVideo.videoHeight || 360;
-      const tctx=temp.getContext("2d");
-      tctx.drawImage(userVideo,0,0,temp.width,temp.height);
-      previewFrame=temp;
-      setupCanvases();
-    }
-    function getPointerPos(e){
-      const rect=roiCanvas.getBoundingClientRect();
-      const touch=e.touches ? e.touches[0] : e;
-      return {x:touch.clientX-rect.left, y:touch.clientY-rect.top};
-    }
-    function startDraw(e){
-      if(!previewFrame) return;
-      const p=getPointerPos(e);
-      isDrawing=true; startX=p.x; startY=p.y;
-      roiRect={x:p.x,y:p.y,w:1,h:1};
-      redrawPreview();
-    }
-    function moveDraw(e){
-      if(!isDrawing || !previewFrame) return;
-      const p=getPointerPos(e);
-      roiRect={x:Math.min(startX,p.x), y:Math.min(startY,p.y), w:Math.abs(p.x-startX), h:Math.abs(p.y-startY)};
-      redrawPreview();
-    }
-    function endDraw(){ isDrawing=false; redrawPreview(); }
-    function resetROI(){ roiRect=null; redrawPreview(); }
-    function getMappedROI(targetW,targetH){
-      if(!roiRect || !previewFrame){
-        return {x:Math.floor(targetW*0.2), y:Math.floor(targetH*0.1), w:Math.floor(targetW*0.6), h:Math.floor(targetH*0.8)};
-      }
-      const scaleX=previewFrame.width/roiCanvas.clientWidth;
-      const scaleY=previewFrame.height/roiCanvas.clientHeight;
-      const srcRect={x:roiRect.x*scaleX,y:roiRect.y*scaleY,w:roiRect.w*scaleX,h:roiRect.h*scaleY};
-      return clampRect({
-        x:Math.floor((srcRect.x/previewFrame.width)*targetW),
-        y:Math.floor((srcRect.y/previewFrame.height)*targetH),
-        w:Math.floor((srcRect.w/previewFrame.width)*targetW),
-        h:Math.floor((srcRect.h/previewFrame.height)*targetH)
-      }, targetW, targetH);
-    }
-    function isInsideROI(lm, roi, width, height){
-      const x=lm.x*width, y=lm.y*height;
-      return x>=roi.x && x<=roi.x+roi.w && y>=roi.y && y<=roi.y+roi.h;
-    }
-    function drawPoseOnOverlay(landmarks){
-      const w=userOverlayCanvas.clientWidth, h=userOverlayCanvas.clientHeight;
-      overlayCtx.clearRect(0,0,w,h);
-      if(!landmarks?.length) return;
-      overlayCtx.lineWidth=3;
-      overlayCtx.strokeStyle="#00e5ff";
-      overlayCtx.fillStyle="#ffeb3b";
-      for(const [a,b] of POSE_CONNECTIONS){
-        const p1=landmarks[a], p2=landmarks[b];
-        if(!p1 || !p2) continue;
-        overlayCtx.beginPath();
-        overlayCtx.moveTo(p1.x*w, p1.y*h);
-        overlayCtx.lineTo(p2.x*w, p2.y*h);
-        overlayCtx.stroke();
-      }
-      landmarks.forEach(lm=>{
-        overlayCtx.beginPath();
-        overlayCtx.arc(lm.x*w, lm.y*h, 3.5, 0, Math.PI*2);
-        overlayCtx.fill();
-      });
-    }
-    async function initPoseModel(){
-      if(poseLandmarker){ setStatus("模型已載入"); return; }
-      try{
-        setStatus("載入模型中...");
-        const vision=await FilesetResolver.forVisionTasks("https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@latest/wasm");
-        poseLandmarker=await PoseLandmarker.createFromOptions(vision,{
-          baseOptions:{modelAssetPath:"https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_lite/float16/1/pose_landmarker_lite.task"},
-          runningMode:"VIDEO", numPoses:1, minPoseDetectionConfidence:.5, minPosePresenceConfidence:.5, minTrackingConfidence:.5
-        });
-        setStatus("模型已載入完成");
-      }catch(err){
-        setStatus("模型載入失敗");
-        userSummary.innerHTML=`<b>模型載入失敗</b><br><br>${String(err)}`;
-      }
-    }
-    async function collectPoseFrames(){
-      await waitForLoadedMetadata(userVideo);
-      const targetSamples=80, duration=userVideo.duration, step=Math.max(.05, duration/targetSamples);
-      const targetW=userVideo.videoWidth || 640, targetH=userVideo.videoHeight || 360;
-      const roi=getMappedROI(targetW,targetH), frames=[];
-      for(let t=0;t<duration;t+=step){
-        await seekTo(userVideo,t);
-        const detection=poseLandmarker.detectForVideo(userVideo, Math.floor(t*1000));
-        const landmarks=detection.landmarks?.[0];
-        if(!landmarks?.length) continue;
-        const insideCount=[landmarks[11],landmarks[12],landmarks[13],landmarks[14],landmarks[15],landmarks[16],landmarks[23],landmarks[24]].filter(lm=>lm && isInsideROI(lm,roi,targetW,targetH)).length;
-        if(insideCount<6) continue;
-        frames.push({t, landmarks});
-      }
-      if(frames.length) drawPoseOnOverlay(frames[Math.floor(frames.length/2)].landmarks);
-      return frames;
-    }
-    function analyzeFrames(frames){
-      if(frames.length<6) return { error:"有效資料不足。" };
-      const isBackhand=strokeSelect.value==="backhand";
-      const shoulderIdx=isBackhand ? LANDMARK.LEFT_SHOULDER : LANDMARK.RIGHT_SHOULDER;
-      const elbowIdx=isBackhand ? LANDMARK.LEFT_ELBOW : LANDMARK.RIGHT_ELBOW;
-      const wristIdx=isBackhand ? LANDMARK.LEFT_WRIST : LANDMARK.RIGHT_WRIST;
-      const elbowAngles=[], wristSpeeds=[], hipCenters=[], validTimes=[];
-      for(let i=0;i<frames.length;i++){
-        const lm=frames[i].landmarks;
-        const shoulder=lm[shoulderIdx], elbow=lm[elbowIdx], wrist=lm[wristIdx];
-        const leftHip=lm[LANDMARK.LEFT_HIP], rightHip=lm[LANDMARK.RIGHT_HIP];
-        if(!shoulder || !elbow || !wrist || !leftHip || !rightHip) continue;
-        elbowAngles.push(angleABC(shoulder, elbow, wrist));
-        hipCenters.push(midpoint(leftHip, rightHip));
-        validTimes.push(frames[i].t);
-        if(i>0){
-          const prevWrist=frames[i-1].landmarks[wristIdx];
-          wristSpeeds.push(pointSpeed(prevWrist, wrist, frames[i].t - frames[i-1].t));
-        }
-      }
-      const smoothWrist=movingAverage(wristSpeeds,5);
-      const base=percentile(smoothWrist,.55), high=percentile(smoothWrist,.85), threshold=base+(high-base)*.5;
-      const peaks=[];
-      for(let i=2;i<smoothWrist.length-2;i++){
-        const v=smoothWrist[i];
-        if(v>threshold && v>smoothWrist[i-1] && v>smoothWrist[i+1]){
-          if(peaks.length===0 || i-peaks[peaks.length-1]>=3) peaks.push(i);
-        }
-      }
-      const intervals=[];
-      for(let i=1;i<peaks.length;i++) intervals.push(validTimes[peaks[i]] - validTimes[peaks[i-1]]);
-      const hipXs=hipCenters.map(p=>p.x), hipYs=hipCenters.map(p=>p.y);
-      return {
-        strokeType: strokeSelect.value,
-        elbowRange: elbowAngles.length ? Math.max(...elbowAngles)-Math.min(...elbowAngles) : 0,
-        peakWristSpeed: smoothWrist.length ? Math.max(...smoothWrist) : 0,
-        hipDrift: std(hipXs)+std(hipYs),
-        rhythmMean: avg(intervals)
-      };
-    }
-    function renderUserSummary(metrics){
-      if(metrics.error){
-        userSummary.innerHTML=`<b>分析失敗</b><br><br>${metrics.error}`;
-        return;
-      }
-      userSummary.innerHTML=`
-        <b>分析完成</b><br><br>
-        <b>動作類型：</b>${metrics.strokeType === "forehand" ? "正手" : metrics.strokeType === "backhand" ? "反手" : "發球"}<br>
-        <b>手肘角度變化：</b>${metrics.elbowRange.toFixed(1)}°<br>
-        <b>手腕速度峰值：</b>${metrics.peakWristSpeed.toFixed(3)}<br>
-        <b>骨盆漂移：</b>${metrics.hipDrift.toFixed(4)}<br>
-        <b>節奏：</b>${metrics.rhythmMean ? metrics.rhythmMean.toFixed(2)+" 秒" : "資料不足"}
-      `;
-    }
-    async function searchReferenceVideos(){
-      if(!userMetrics || userMetrics.error){
-        candidateList.innerHTML=`<div class="muted">請先完成分析。</div>`;
-        return;
-      }
-      candidateList.innerHTML=`<div class="muted">搜尋影片中...</div>`;
-      const params=new URLSearchParams({
-        strokeType: strokeSelect.value,
-        playerName: playerNameInput.value.trim(),
-        maxResults:"5",
-        extraKeywords:"training slow motion front view"
-      });
-      try{
-        const resp=await fetch(`${API_BASE}/api/search-videos?${params.toString()}`);
-        const data=await resp.json();
-        if(!resp.ok){
-          candidateList.innerHTML=`<div class="muted">搜尋失敗：${data.error || "未知錯誤"}</div>`;
-          return;
-        }
-        if(!data.items || !data.items.length){
-          candidateList.innerHTML=`<div class="muted">找不到符合條件的影片。</div>`;
-          return;
-        }
-        renderCandidates(data.items);
-      }catch(err){
-        candidateList.innerHTML=`<div class="muted">無法連線 API：${String(err)}</div>`;
-      }
-    }
-    function renderCandidates(items){
-      candidateList.innerHTML = items.map((item, idx)=>`
-        <div class="candidate">
-          <img src="${item.thumbnail}" alt="thumbnail" />
-          <div>
-            <div class="candidate-title">${item.title}</div>
-            <div class="candidate-meta">${item.channelTitle || ""}<br>片長：${item.duration || "-"}｜觀看數：${item.viewCount || "0"}</div>
-            <div class="candidate-actions">
-              <button class="secondary" data-pick="${idx}">選擇此影片</button>
-              <button data-open="${item.id}">開啟 YouTube</button>
-            </div>
-          </div>
-        </div>
-      `).join("");
-      candidateList.querySelectorAll("[data-pick]").forEach(btn=>{
-        btn.addEventListener("click", ()=>{
-          selectedReference = items[Number(btn.dataset.pick)];
-          refPlayer.src = selectedReference.embedUrl || `https://www.youtube.com/embed/${selectedReference.id}`;
-          compareWithReference(selectedReference);
-        });
-      });
-      candidateList.querySelectorAll("[data-open]").forEach(btn=>{
-        btn.addEventListener("click", ()=>{
-          window.open(`https://www.youtube.com/watch?v=${btn.dataset.open}`, "_blank");
-        });
-      });
-    }
-    function createReferenceProfileFromVideoSelection(ref, user){
-      const speedBoost = ref.title.toLowerCase().includes("slow") ? 1.05 : 1.12;
-      return {
-        elbowRange: user.elbowRange * 1.08,
-        peakWristSpeed: user.peakWristSpeed * speedBoost,
-        hipDrift: user.hipDrift * 0.88,
-        rhythmMean: user.rhythmMean ? user.rhythmMean * 0.95 : 0.58
-      };
-    }
-    function compareWithReference(ref){
-      if(!userMetrics || !ref) return;
-      const refMetrics = createReferenceProfileFromVideoSelection(ref, userMetrics);
-      const elbowScore = Math.max(0, 100 - Math.abs(userMetrics.elbowRange - refMetrics.elbowRange) * 2);
-      const wristScore = Math.max(0, 100 - (Math.abs(userMetrics.peakWristSpeed - refMetrics.peakWristSpeed) / Math.max(refMetrics.peakWristSpeed, 0.01)) * 120);
-      const balanceScore = Math.max(0, 100 - (Math.abs(userMetrics.hipDrift - refMetrics.hipDrift) / Math.max(refMetrics.hipDrift, 0.01)) * 100);
-      const rhythmScore = Math.max(0, 100 - (Math.abs(userMetrics.rhythmMean - refMetrics.rhythmMean) / Math.max(refMetrics.rhythmMean || 0.01, 0.01)) * 100);
-      const total = Math.round(elbowScore*0.25 + wristScore*0.30 + balanceScore*0.20 + rhythmScore*0.25);
-      diffReport.innerHTML = `
-        <b>比較完成</b><br><br>
-        <b>參考影片：</b>${ref.title}<br><br>
-        ${userMetrics.elbowRange < refMetrics.elbowRange ? "1. 引拍幅度可以再大一些。<br>" : "1. 引拍幅度接近參考。<br>"}
-        ${userMetrics.peakWristSpeed < refMetrics.peakWristSpeed ? "2. 擊球瞬間加速可以再明顯。<br>" : "2. 出手爆發接近參考。<br>"}
-        ${userMetrics.hipDrift > refMetrics.hipDrift ? "3. 重心晃動較大，建議更穩定下盤。<br>" : "3. 重心控制不錯。<br>"}
-        ${userMetrics.rhythmMean > refMetrics.rhythmMean ? "4. 節奏略慢，可加強連續練習。" : "4. 節奏表現不錯。"}
-      `;
-      document.getElementById("simTotalBar").style.width=`${Math.max(0,Math.min(100,total))}%`;
-      document.getElementById("simTotalLabel").textContent=total;
-    }
-    async function analyzeUserVideo(){
-      if(!userVideo.src){
-        userSummary.innerHTML="請先上傳影片。";
-        return;
-      }
-      if(!poseLandmarker){
-        userSummary.innerHTML="請先載入模型。";
-        return;
-      }
-      userSummary.innerHTML="分析中...";
-      const frames=await collectPoseFrames();
-      userMetrics=analyzeFrames(frames);
-      renderUserSummary(userMetrics);
-    }
-    upload.addEventListener("change", async (e)=>{
-      const file=e.target.files[0];
-      if(!file) return;
-      userVideo.src=URL.createObjectURL(file);
-      userSummary.innerHTML="影片已載入，請拖曳框選人物。";
-      candidateList.innerHTML="";
-      diffReport.innerHTML="等待比較。";
-      selectedReference=null;
-    });
-    userVideo.addEventListener("loadeddata", async ()=>{
-      await waitForLoadedMetadata(userVideo);
-      await captureCurrentFrame();
-    });
-    document.getElementById("resetRoiBtn").addEventListener("click", resetROI);
-    document.getElementById("initModelBtn").addEventListener("click", initPoseModel);
-    document.getElementById("analyzeBtn").addEventListener("click", analyzeUserVideo);
-    document.getElementById("searchRefBtn").addEventListener("click", searchReferenceVideos);
-    roiCanvas.addEventListener("mousedown", startDraw);
-    roiCanvas.addEventListener("mousemove", moveDraw);
-    window.addEventListener("mouseup", endDraw);
-    roiCanvas.addEventListener("touchstart", (e)=>{ e.preventDefault(); startDraw(e); }, { passive:false });
-    roiCanvas.addEventListener("touchmove", (e)=>{ e.preventDefault(); moveDraw(e); }, { passive:false });
-    window.addEventListener("touchend", endDraw);
-    window.addEventListener("resize", ()=>{ if(previewFrame) setupCanvases(); });
-    setupCanvases();
   </script>
 </body>
 </html>
